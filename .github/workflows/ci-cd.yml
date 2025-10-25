@@ -2,10 +2,10 @@ name: DevOps Microservice CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]  # ← CAMBIADO de main a master
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:  # Permite ejecución manual
+    branches: [ master ]  # ← CAMBIADO de main a master
+  workflow_dispatch:
 
 jobs:
   test:
@@ -30,7 +30,7 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'  # ← CAMBIADO de main a master
 
     steps:
       - name: Checkout code
