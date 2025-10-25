@@ -31,18 +31,25 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init infrastructure/terraform
+        run: |
+          cd infrastructure/terraform
+          terraform init
 
       - name: Terraform Validate
-        run: terraform validate infrastructure/terraform
+        run: |
+          cd infrastructure/terraform
+          terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -var="aws_region=$AWS_REGION" infrastructure/terraform
+        run: |
+          cd infrastructure/terraform
+          terraform plan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/master'
-        run: terraform apply -auto-approve -var="aws_region=$AWS_REGION" infrastructure/terraform
-
+        run: |
+          cd infrastructure/terraform
+          terraform apply -auto-approve
   # STAGE 2: BUILD
   build:
     name: "2. Build Application"
