@@ -29,13 +29,18 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+### VS Code ####
 .vscode/
 
 
 # Terraform
-**/.terraform/*
+# Terraform
+.terraform/
 *.tfstate
-*.tfstate.backup
-*.tfvars
-.terraform.tfstate.lock.info
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
