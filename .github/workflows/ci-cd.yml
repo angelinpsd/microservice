@@ -1,15 +1,72 @@
-name: DevOps Microservice CI/CD
+name: DevOps Microservice CI/CD - 5 Stages
 
 on:
   push:
-    branches: [ master ]  # ← CAMBIADO de main a master
-  pull_request:
-    branches: [ master ]  # ← CAMBIADO de main a master
+    branches: [ master ]
   workflow_dispatch:
 
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: devops-microservice
+  EKS_CLUSTER_NAME: devops-microservice-cluster
+  K8S_NAMESPACE: default
+
 jobs:
-  test:
+  # STAGE 1: INFRAESTRUCTURA CON TERRAFORM
+  infrastructure:
+    name: "1. Infrastructure as Code"
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init infrastructure/terraform
+
+      - name: Terraform Validate
+        run: terraform validate infrastructure/terraform
+
+      - name: Terraform Plan
+        run: terraform plan -var="aws_region=$AWS_REGION" infrastructure/terraform
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/master'
+        run: terraform apply -auto-approve -var="aws_region=$AWS_REGION" infrastructure/terraform
+
+  # STAGE 2: BUILD
+  build:
+    name: "2. Build Application"
+    runs-on: ubuntu-latest
+    needs: infrastructure
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn clean compile -DskipTests
+
+  # STAGE 3: TEST
+  test:
+    name: "3. Run Tests"
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,26 +81,81 @@ jobs:
       - name: Run tests
         run: mvn test
 
-      - name: Build application
-        run: mvn clean compile
+      - name: Build package
+        run: mvn package -DskipTests
 
-  build:
-    needs: test
+  # STAGE 4: CONTAINER IMAGE
+  container-image:
+    name: "4. Build & Push Container"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'  # ← CAMBIADO de main a master
-
+    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Build with Maven
-        run: mvn clean package -DskipTests
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker image
-        run: docker build -t devops-microservice:latest .
+        run: |
+          docker build -t $ECR_REPOSITORY:latest .
+          docker tag $ECR_REPOSITORY:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:latest
+
+  # STAGE 5: DEPLOY TO KUBERNETES
+  deploy:
+    name: "5. Deploy to Kubernetes"
+    runs-on: ubuntu-latest
+    needs: [infrastructure, container-image]
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $EKS_CLUSTER_NAME
+
+      - name: Deploy to EKS
+        run: |
+          # Get ECR repository URL from Terraform output or construct it
+          ECR_URL="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest"
+          
+          # Update deployment with actual ECR URL
+          sed -i "s|ECR_REPOSITORY_URL_PLACEHOLDER|$ECR_URL|g" infrastructure/kubernetes/deployment.yml
+          
+          echo "Deploying with image: $ECR_URL"
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f infrastructure/kubernetes/deployment.yml
+          kubectl apply -f infrastructure/kubernetes/service.yml
+          
+          # Wait for deployment to complete
+          kubectl rollout status deployment/devops-microservice -n $K8S_NAMESPACE --timeout=300s
+
+      - name: Get Load Balancer URL
+        run: |
+          echo "🎯 Load Balancer URL:"
+          kubectl get service devops-microservice-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+          echo ""
+          echo "⏳ Wait 2-5 minutes for the Load Balancer to be fully provisioned"
