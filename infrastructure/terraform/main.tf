@@ -25,7 +25,7 @@ resource "aws_ecr_repository" "devops_microservice" {
 resource "aws_eks_cluster" "devops_cluster" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster.arn
-  version  = "1.28"
+  version  = "1.29"  # ← CAMBIA de 1.28 a 1.29
 
   vpc_config {
     subnet_ids = [aws_subnet.public_1.id, aws_subnet.public_2.id]
