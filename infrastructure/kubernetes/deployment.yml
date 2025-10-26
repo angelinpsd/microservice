@@ -51,4 +51,4 @@ spec:
   ports:
     - port: 80
       targetPort: 8080
-  type: LoadBalancer  # ← Esto crea un Load Balancer en AWS automáticamentes
+  type: LoadBalancer  # ← Esto crea un Load Balancer en AWS automáticamentes 2
