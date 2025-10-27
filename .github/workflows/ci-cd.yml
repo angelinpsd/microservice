@@ -9,7 +9,7 @@
     AWS_REGION: us-east-1
     ECR_REPOSITORY: devops-microservice
     EKS_CLUSTER_NAME: devops-microservice-cluster
-    K8S_NAMESPACE: default
+    K8S_NAMESPACE: prod-micros
 
   jobs:
     # STAGE 1: INFRAESTRUCTURA CON TERRAFORM
@@ -96,7 +96,7 @@
           uses: actions/upload-artifact@v4
           with:
             name: microservice-jar
-            path: target/*.jar
+            path: target*.jar/
             retention-days: 1
     # STAGE 4: CONTAINER IMAGE
     # STAGE 4: CONTAINER IMAGE
@@ -173,7 +173,7 @@
             ECR_URL="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest"
             
             # Update deployment with actual ECR URL
-            sed -i "s|ECR_REPOSITORY_URL_PLACEHOLDER|$ECR_URL|g" infrastructure/kubernetes/deployment.yml
+            # sed -i "s|ECR_REPOSITORY_URL_PLACEHOLDER|$ECR_URL|g" infrastructure/kubernetes/deployment.yml
             
             echo "Deploying with image: $ECR_URL"
             
