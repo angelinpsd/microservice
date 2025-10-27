@@ -97,7 +97,7 @@
           with:
             name: microservice-jar
             path: target*.jar/
-            retention-days: 1
+            retention-days: 3
     # STAGE 4: CONTAINER IMAGE
     # STAGE 4: CONTAINER IMAGE
     container-image:
