@@ -174,7 +174,7 @@
             
             # Update deployment with actual ECR URL
             sed -i "s|ECR_REPOSITORY_URL_PLACEHOLDER|$ECR_URL|g" infrastructure/kubernetes/deployment.yml
-            
+            grep "image:" infrastructure/kubernetes/deployment.yml
             echo "Deploying with image: $ECR_URL"
             
             # Create namespace if not exists
