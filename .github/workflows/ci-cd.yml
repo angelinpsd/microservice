@@ -195,8 +195,8 @@
         - name: Get Load Balancer URL
           run: |
             echo "Load Balancer URL:"
-            LB= kubectl get service devops-microservice-service -n $K8S_NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
-            echo ""
+            LB=kubectl get service devops-microservice-service -n $K8S_NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+            echo "$LB"
             echo "Microservice response:"
             curl -X POST \
             -H "X-Parse-REST-API-Key: 2f5ae96c-b558-4c7b-a590-a501ae1c3f6c" \
