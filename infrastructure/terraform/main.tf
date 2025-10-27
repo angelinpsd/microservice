@@ -9,10 +9,10 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "prod-state-bucketpsd"      # Nombre del bucket S3 donde guardarás el estado
+    bucket         = "prod-state-bucketpsd"      # Nombre del bucket S3 se guardara el estado
     key            = "terraform.tfstate" # Ruta dentro del bucket
     region         = "us-east-1"                      # Región del bucket
-    dynamodb_table = "terraform-locks"                # (Opcional, para bloqueo del estado)
+    dynamodb_table = "terraform-locks"                # si hay bloqueo de estado
     encrypt        = true                             # Encripta el archivo de estado en S3
   }
 }

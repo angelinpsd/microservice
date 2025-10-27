@@ -165,7 +165,7 @@
             
             # Verify ECR access
             aws ecr describe-repositories --repository-names $ECR_REPOSITORY
-            echo "✅ ECR repository accessible"
+            echo "ECR repositorio es accessible"
 
         - name: Deploy to EKS
           run: |
@@ -194,7 +194,15 @@
 
         - name: Get Load Balancer URL
           run: |
-            echo "🎯 Load Balancer URL:"
-            kubectl get service devops-microservice-service -n $K8S_NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+            echo "Load Balancer URL:"
+            LB= kubectl get service devops-microservice-service -n $K8S_NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
             echo ""
-            echo "⏳ Wait 2-5 minutes for the Load Balancer to be fully provisioned"
+            echo "Microservice response:"
+            curl -X POST \
+            -H "X-Parse-REST-API-Key: 2f5ae96c-b558-4c7b-a590-a501ae1c3f6c" \
+            -H "X-JWT-KWY: ${JWT}" \
+            -H "Content-Type: application/json" \
+            -d '{ "message": "This is a test", "to": "Juan Perez", "from": "Rita Asturia", "timeToLifeSec": 45 }' \
+            http://$LB/DevOps
+
+            
