@@ -173,7 +173,7 @@
             ECR_URL="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest"
             
             # Update deployment with actual ECR URL
-            # sed -i "s|ECR_REPOSITORY_URL_PLACEHOLDER|$ECR_URL|g" infrastructure/kubernetes/deployment.yml
+            sed -i "s|ECR_REPOSITORY_URL_PLACEHOLDER|$ECR_URL|g" infrastructure/kubernetes/deployment.yml
             
             echo "Deploying with image: $ECR_URL"
             
