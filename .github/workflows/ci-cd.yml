@@ -12,7 +12,7 @@
     K8S_NAMESPACE: prod-micros
 
   jobs:
-    # STAGE 1: INFRAESTRUCTURA CON TERRAFORM
+    # STAGE 1: INFRAESTRUCTURA CON TERRAFORM new
     infrastructure:
       name: "1. Infrastructure as Code"
       runs-on: ubuntu-latest
