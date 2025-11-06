@@ -82,7 +82,7 @@ curl -X POST \
 -H "X-JWT-KWY: ${JWT}" \
 -H "Content-Type: application/json" \
 -d '{ "message": "This is a test", "to": "Juan Perez", "from": "Rita Asturia", "timeToLifeSec": 45 }' \
-http://abda5deee76924ab1a5ec8a3d60a310a-2120651090.us-east-1.elb.amazonaws.com/DevOps
+http://af727e77f75ca4c0c93414c6b62a5b3a-468161218.us-east-1.elb.amazonaws.com/DevOps
 
 
 Respuesta esperada:
